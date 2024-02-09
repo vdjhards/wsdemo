@@ -1,0 +1,67 @@
+Tooltip detection
+
+Applying the directive logic to show a tooltip from ng-bootstrap (specifically NgbTooltip) when the content is ellipsis on mouseover involves combining the custom directive with the tooltip directive provided by ng-bootstrap.
+Here's an approach to modify the directive. It still detects whether the text is ellipsis and applies a color change, but now also controls the display of an NgbTooltip based on that ellipsis detection:
+First, you will need to install ng-bootstrap if you have not already done so:
+
+npm install @ng-bootstrap/ng-bootstrap
+
+highlightEllipsisTooltip.directive.ts
+
+import { Directive, ElementRef, Renderer2, HostListener, Input } from '@angular/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+@Directive({
+  selector: '[appHighlightEllipsisTooltip]'
+})
+export class HighlightEllipsisTooltipDirective {
+  @Input() tooltip: NgbTooltip;
+  constructor(private el: ElementRef, private renderer: Renderer2) {}
+  private isTextEllipsis(): boolean {
+    const elem = this.el.nativeElement;
+    return (elem.offsetWidth < elem.scrollWidth);
+  }
+  // Function to apply color based on text being ellipsis or not
+  private applyColor(): void {
+    const color = this.isTextEllipsis() ? 'red' : 'yellow';
+    this.renderer.setStyle(this.el.nativeElement, 'color', color);
+  }
+  // Mouseover event
+  @HostListener('mouseover') onMouseOver() {
+    this.applyColor();
+    if (this.isTextEllipsis()) {
+      this.tooltip.open();
+    }
+  }
+  // Mouseout event
+  @HostListener('mouseout') onMouseOut() {
+    this.renderer.setStyle(this.el.nativeElement, 'color', '');
+    this.tooltip.close();
+  }
+}
+
+To use the directive together with NgbTooltip, you would set it up like this in your template:
+
+<span #t="ngbTooltip"
+      ngbTooltip="Your tooltip text here"
+      [appHighlightEllipsisTooltip]="t" 
+      [title]="yourTitle">
+  {{ yourTitle }}
+</span>
+
+Remember to import the tooltip module in your Angular module as well:
+
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+@NgModule({
+  imports: [
+    NgbTooltipModule,
+    // ... other imports
+  ],
+})
+export class YourModule { }
+
+In this setup, the NgbTooltip is linked via a template variable #t and is passed to the directive [appHighlightEllipsisTooltip]="t" so that it can be programmatically controlled within the directive code.
+Please test this in your application to ensure that it interacts correctly with your styling and any other custom logic you may have in place. Additionally, adjust the tooltip's placement and triggers to fit your specific UI requirements.
+
+
+
+

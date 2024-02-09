@@ -1,0 +1,74 @@
+Implement custom Audio On/off controls , custom time duration why removing default controls of the video tag
+
+import { Component, ViewChild } from '@angular/core';
+import { VgAPI } from 'videogular2/compiled/core';
+@Component({
+  selector: 'app-video-player',
+  template: `
+    <vg-player (onPlayerReady)="onPlayerReady($event)">
+      <video [vgHls]="'http://your-stream-url.m3u8'" #media id="singleVideo" preload="auto" crossorigin>
+        <source src="http://your-stream-url.m3u8" type="video/mp4">
+      &lt;/video&gt;
+    </vg-player>
+    <!-- Your custom controls -->
+    <div class="custom-controls">
+      <button (click)="toggleAudio()">{{isMuted ? 'Unmute' : 'Mute'}}&lt;/button&gt;
+      &lt;div&gt;Current Time: {{ currentTime | date:'mm:ss' }}&lt;/div&gt;
+      &lt;div&gt;Duration: {{ duration | date:'mm:ss' }}&lt;/div&gt;
+    &lt;/div&gt;
+  `
+})
+export class VideoPlayerComponent {
+  @ViewChild(VgAPI) vgApi: VgAPI;
+  currentTime: number = 0;
+  duration: number = 0;
+  isMuted: boolean = false;
+  onPlayerReady(api: VgAPI) {
+    this.vgApi = api;
+    this.vgApi.getDefaultMedia().subscriptions.timeUpdate.subscribe(
+      () => {
+        this.currentTime = this.vgApi.currentTime;
+        this.duration = this.vgApi.duration;
+      }
+    );
+  }
+  toggleAudio() {
+    this.isMuted = !this.isMuted;
+    this.vgApi.volume = this.isMuted ? 0 : 1;
+  }
+}
+
+
+In this code:
+* 		vg-player is the container for the ngx-videogular player.
+* 		We are not including vg-controls, which means we are opting out of the default controls.
+* 		The vgHls directive is used to bind an HLS source to the video element.
+* 		The onPlayerReady method binds to the API when the player is ready, which can then be used to control the video.
+* 		We created a <div class="custom-controls"> to hold our custom controls, including a mute/unmute button and display elements for the current time and duration.
+* 		The toggleAudio method toggles the video's audio on and off.
+* 		The current time and duration are updated by subscribing to the timeUpdate event from the video and converting them to a mm:ss format using the Angular date pipe.
+If the date pipe does not provide formatting directly in the mm:ss format for the durations, you might need to create a custom pipe or use a function to format the time appropriately.
+Please make sure that you import the required modules and services in your module file:
+
+
+
+import { VgCoreModule } from 'videogular2/compiled/core';
+import { VgControlsModule } from 'videogular2/compiled/controls';
+import { VgOverlayPlayModule } from 'videogular2/compiled/overlay-play';
+import { VgBufferingModule } from 'videogular2/compiled/buffering';
+@NgModule({
+  declarations: [
+    // Your components here
+  ],
+  imports: [
+    // ...
+    VgCoreModule,
+    VgControlsModule,
+    VgOverlayPlayModule,
+    VgBufferingModule
+    // ...
+  ],
+  providers: [],
+  bootstrap: [ /* Your bootstrap components here */ ]
+})
+export class AppModule { }
